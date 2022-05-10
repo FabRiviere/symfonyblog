@@ -33,6 +33,7 @@ class Category
     public function __construct()
     {
         $this->articles = new ArrayCollection();
+        $this->createdAt = new \DateTime();
     }
 
     public function getId(): ?int
@@ -50,6 +51,9 @@ class Category
         $this->title = $title;
 
         return $this;
+    }
+    public function __toString() {
+        return $this->title;
     }
 
     public function getDescription(): ?string
