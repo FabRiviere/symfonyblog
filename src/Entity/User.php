@@ -6,10 +6,20 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
-class User
+/**
+ * @uniqueEntity(
+ * fields = {"email"},
+ * message= "L'email renseigné existe déjà !"
+ * )
+ */
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -19,15 +29,39 @@ class User
     #[ORM\Column(type: 'string', length: 255)]
     private $username;
 
+    /**
+     * @Assert\Length(min = 3,max = 50,
+     *      minMessage = "Votre prénom doit contenir au moins {{ limit }} caractères",
+     *      maxMessage = "Votre prénom ne peut pas dépasser {{ limit }} caractères"
+     * )
+     */
     #[ORM\Column(type: 'string', length: 255)]
     private $firstname;
 
+    /**
+     * @Assert\Length(min = 3,max = 50,
+     * minMessage = "Votre Nom doit contenir au moins {{ limit }} caractères",
+     * maxMessage = "Votre Nom ne peut pas dépasser {{ limit }} caractères"
+     * )
+     */
     #[ORM\Column(type: 'string', length: 255)]
     private $lastname;
 
+    /**
+     * @Assert\Email(message="L'email que vous avez saisi n'est pas valide !")
+     */
     #[ORM\Column(type: 'string', length: 255)]
+    /**
+     * @Assert\Email
+     */
     private $email;
 
+    /**
+     * @Assert\Length(min = 8,max = 50,
+     *      minMessage = "Votre mot de passe doit contenir au moins {{ limit }} caractères",
+     *      maxMessage = "Votre mot de passe ne peut pas dépasser {{ limit }} caractères"
+     * )
+     */
     #[ORM\Column(type: 'string', length: 255)]
     private $password;
 
@@ -36,6 +70,11 @@ class User
 
     #[ORM\OneToMany(mappedBy: 'author', targetEntity: Article::class)]
     private $articles;
+
+    /**
+     * @Assert\EqualTo(propertyPath="password", message="Les deux mots de passe doivent être identiques !")
+     */
+    private $passwordConfirm;
 
     public function __construct()
     {
@@ -57,6 +96,15 @@ class User
     {
         $this->username = $username;
 
+        return $this;
+    }
+    public function getPasswordConfirm(): ?string
+    {
+        return $this->passwordConfirm;
+    }
+    public function setPasswordConfirm(string $passwordConfirm): self
+    {
+        $this->passwordConfirm = $passwordConfirm;
         return $this;
     }
     public function __toString() {
@@ -140,6 +188,7 @@ class User
 
         return $this;
     }
+    
 
     public function removeArticle(Article $article): self
     {
@@ -152,4 +201,19 @@ class User
 
         return $this;
     }
+
+    public function getRoles():array {
+        return ['ROLE_USER'];
+    }
+    
+    public function getSalt() {}
+    
+    public function eraseCredentials() {}
+    
+    public function getUserIdentifier():string {
+        return $this->email;
+    } 
 }
+
+    
+
